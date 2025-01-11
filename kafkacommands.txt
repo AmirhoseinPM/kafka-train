@@ -1,0 +1,112 @@
+strting kafka:
+	1. download kafka binary
+	2. extract file
+	3. add extracted file PATH to $PATH: .bashrc << PATH=$PATH:~/kafka.../bin
+	4. start zookeeper: zookeeper-server.sh ~/kafka.../config/zookeeper.properties
+	5. start kafka: kafka-server-start.sh ~/kafka_2.13-3.9.0/config/server.properties
+-----------------------------------------------
+create delete describe change topics: 
+kafka-topics.sh --bootstrap-server localhost:9092  --> connect to brokers
+	1. --list				# list topics
+	2. --create --topic first_topic 	# create first_topic topic, after this you can not create topic with same name or first.topic name, this create first_topic with 1 partition
+	3. --create --topic second_topic --partitions 3 --replication-factor 2 --> error: because we use 1 broker we can not have replica --> replication factor <= brokers
+	4. --describe --topic first_topic
+	5. --delete --topic first_topic
+-------------------------------------------------
+write message to topics using cli producer:
+kafka-console-producer --bootstrap-server localhost:9092 --topic first_topic
+> hello
+> my name is pooyan
+^C
+
+kafka-console-producer --bootstrap-server localhost:9092 --topic first_topic --producer-property acks=all
+> some msg that is acks
+> another msg
+
+
+kafka-console-producer --bootstrap-server localhost:9092 --topic first_topic \
+	--property parse.key=true \
+	--property key.seperator=:
+>example key: example value
+>user_id_1: value1
+>badmsg
+exception because of msg without key 
+-------------------------------------------------
+read msg from topic with cli consumer:
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic
+
+# when we start cli consumer reading data does not start from 0 offset , current and later
+# to read from 0 offset add --from-beginning
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic --from-beginning 
+
+# reading message does not have same order of writing when we have multiple partition because writing is round robin between partitions
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic --from-beginning \
+	--formatter kafka.tools.DefaultMessageFormatter \
+	--property print.timestamp=true \
+	--property print.key=true \
+	--property print.value=true
+
+
+------------------------------------------------
+kafka consumer in group:
+ 
+kafka-console-consumer.sh --bootstrap-sever localhost:9092 --topic first_topic group first_consumer_group
+
+# messages separate between different consumer(every consumer read from different partition) of consumer-group -> load-balancing
+# if we have 3 partitions and 4 consumer in a group -> one of that consumer do not receive any msg but if one consumer dies, 4th consumer activate and read msg
+
+kafka-console-consumer.sh --bootstrap-sever localhost:9092 --topic first_topic group second_consumer_group \
+	--from-beginning	 # this not start from beginning because offset commits for group not consumer alone.
+
+# if we have multiple consumer group: all of them get data when wrote to topic
+ ----------------------------------------------
+kafka-consumer-group.sh		
+--------> list, describe, delete consumer group
+
+kafka-consumer-group.sh --botstrap-server localhost:9092 --list
+first_consumer_group
+second_consumer_group
+
+kafka-consumer-group.sh --botstrap-server localhost:9092 --describe --group first_consumer_group
+log-end-offset -----> last message index in topic
+current-offset -----> last message read with consumer group
+consumer-id --------> clarify what consumer in group read data from specific partition
+
+
+# kafka-console consumer with no specific group acts as single consumer group and see in list of consumer groups
+# but that does not commit offset in current-offset
+----------------------------------------------
+Resetting offset
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
